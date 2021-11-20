@@ -234,4 +234,55 @@ NtCreateFile10 proc
 		ret
 NtCreateFile10 endp
 
+; FBK
+NtReadFile7SP1 proc
+		mov r10, rcx
+		mov eax, 03h
+		syscall
+		ret
+NtReadFile7SP1 endp
+NtReadFile80 proc
+		mov r10, rcx
+		mov eax, 04h
+		syscall
+		ret
+NtReadFile80 endp
+NtReadFile81 proc
+		mov r10, rcx
+		mov eax, 05h
+		syscall
+		ret
+NtReadFile81 endp
+NtReadFile10 proc
+		mov r10, rcx
+		mov eax, 06h
+		syscall
+		ret
+NtReadFile10 endp
+NtWriteFile7SP1 proc
+		mov r10, rcx
+		mov eax, 05h
+		syscall
+		ret
+NtWriteFile7SP1 endp
+NtWriteFile80 proc
+		mov r10, rcx
+		mov eax, 06h
+		syscall
+		ret
+NtWriteFile80 endp
+NtWriteFile81 proc
+		mov r10, rcx
+		mov eax, 07h
+		syscall
+		ret
+NtWriteFile81 endp
+NtWriteFile10 proc
+		mov r10, rcx
+		mov eax, 08h
+		syscall
+		ret
+NtWriteFile10 endp
+
+
 end

