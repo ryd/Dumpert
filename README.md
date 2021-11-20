@@ -28,3 +28,9 @@ You can use Visual Studio to compile it from source.
 ```
 
 The sRDI code can be found here: https://github.com/monoxgas/sRDI
+
+# Update
+* Added patch for McAfee detection of lsass dump by rewriting the binary - based on https://github.com/k4nfr3/Dumpert
+* If Windows Real-Time Protection is enabled, process hangs forever while calling minidump (use taskmgr instead)
+* Added parameter for dump file - /??/ prefix is needed for file path
+
